@@ -87,7 +87,7 @@ async def process_video_file(update, context, file_name):
                 caption=caption
             )
             await context.bot.send_document(
-                chat_id="-4153377397",
+                chat_id="-1002201677732",
                 document=open(xspf_file_name, 'rb'),
                 filename=os.path.basename(xspf_file_name)
             )
