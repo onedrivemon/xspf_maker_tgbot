@@ -275,15 +275,16 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Handler for /start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
-        'Hi! Send a video file in the group and\n'
-        'I will generate an XSPF file for it.\n'
+        'First go to @naabi7_bot and start the bot.\n'
+        'Send a video file in the group and\n'
+        'I will generate a XSPF file for it.\n'
         'The file needs to be uploaded by the Ragannan <BOT>.\n'
         'By using the /m commands of Ragannan.'
         'This .xspf file can be used to watch the movie that has been uploaded.\n'
         'Use /nokate to check for .xspf files that are ready to stream.\n'
         'Use /find to searcg for .xspf files that are already uploaded.\n'
-        'Ex:  /find atlas -->\n'
-        '-->will show the movies with name of atlas in my pm.\n'
+        'Ex: /find atlas \n'
+        ' ---> will show u the movies with name of atlas in bots pm.\n'
         'The archive group for the xspf files are at https://t.me/+IvRoFcdYRW5iZWJl ..$'
     )
 
