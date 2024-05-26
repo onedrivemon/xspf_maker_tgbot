@@ -93,7 +93,7 @@ async def process_video_file(update, context, file_name):
             )
             await context.bot.send_message(
                 chat_id=update.effective_chat.id,
-                text=f"XSPF file is in bots PM @ragflix_bot",
+                text=f"XSPF file is in bots PM @naabi7_bot",
                 reply_to_message_id=update.message.message_id
                 #parse_mode='Markdown'
             )
@@ -117,7 +117,7 @@ async def process_video_file(update, context, file_name):
             )
             await context.bot.send_message(
                 chat_id=update.effective_chat.id,
-                text=f"XSPF file is in bots PM @ragflix_bot",
+                text=f"XSPF file is in bots PM @naabi7_bot",
                 reply_to_message_id=update.message.message_id
                 #parse_mode='Markdown'
             )
@@ -161,7 +161,7 @@ async def nokate(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             await context.bot.send_message(
                 chat_id=update.effective_chat.id,
-                text=f"Files listed in bots PM @ragflix_bot",
+                text=f"Files listed in bots PM @naabi7_bot",
                 reply_to_message_id=update.message.message_id
                 #parse_mode='Markdown'
             )
@@ -257,7 +257,7 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
             
             await context.bot.send_message(
                 chat_id=update.effective_chat.id,
-                text=f"Files listed in bots PM @ragflix_bot",
+                text=f"Files listed in bots PM @naabi7_bot",
                 reply_to_message_id=update.message.message_id
                 #parse_mode='Markdown'
             )
