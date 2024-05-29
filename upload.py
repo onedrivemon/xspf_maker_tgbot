@@ -13,25 +13,31 @@ def create_drive_service(credentials_file):
     service = build('drive', 'v3', credentials=credentials_obj)
     return service
 
-# Function to download a file from Google Drive
-def download_from_drive(file_name, folder_id, credentials_file):
+def download_from_drive(file_identifier, folder_id, credentials_file, by_id=False):
     service = create_drive_service(credentials_file)
-    results = service.files().list(q=f"name='{file_name}' and '{folder_id}' in parents", fields="files(id)").execute()
-    files = results.get('files', [])
-    if not files:
-        return None
+    
+    if by_id:
+        file_id = file_identifier
+        file_metadata = service.files().get(fileId=file_id, fields="id, name, parents").execute()
+        file_name_kitti = file_metadata.get('name')
     else:
+        results = service.files().list(q=f"name='{file_identifier}' and '{folder_id}' in parents", fields="files(id)").execute()
+        files = results.get('files', [])
+        if not files:
+            return None
         file_id = files[0]['id']
-        request = service.files().get_media(fileId=file_id)
-        fh = BytesIO()
-        downloader = MediaIoBaseDownload(fh, request)
-        done = False
-        while not done:
-            status, done = downloader.next_chunk()
-        fh.seek(0)
-        with open(file_name, 'wb') as f:
-            f.write(fh.read())
-        return os.path.abspath(file_name)
+
+    request = service.files().get_media(fileId=file_id)
+    fh = BytesIO()
+    downloader = MediaIoBaseDownload(fh, request)
+    done = False
+    while not done:
+        status, done = downloader.next_chunk()
+    fh.seek(0)
+    file_name = file_name_kitti if by_id else file_identifier
+    with open(file_name, 'wb') as f:
+        f.write(fh.read())
+    return os.path.abspath(file_name)
 
 def upload_to_drive(file_path, folder_id, credentials_file):
     service = create_drive_service(credentials_file)
