@@ -58,6 +58,7 @@ def search_xspf_files(folder_id, credentials_file):
         fields="files(name)").execute()
     
     xspf_files = [file['name'] for file in results.get('files', [])]
+    xspf_files = sorted(xspf_files)
     return xspf_files
 
 def search_files(folder_id, query, credentials_file):
