@@ -95,7 +95,6 @@ async def process_video_file(update, context, file_name):
                 chat_id=update.effective_chat.id,
                 text=f"XSPF file is in bots PM @naabi7_bot",
                 reply_to_message_id=update.message.message_id
-                #parse_mode='Markdown'
             )
         else:
             await context.bot.send_document(
@@ -119,7 +118,6 @@ async def process_video_file(update, context, file_name):
                 chat_id=update.effective_chat.id,
                 text=f"XSPF file is in bots PM @naabi7_bot",
                 reply_to_message_id=update.message.message_id
-                #parse_mode='Markdown'
             )
         else:
             await context.bot.send_message(
@@ -144,89 +142,127 @@ async def process_video_file(update, context, file_name):
             )
         os.remove(file_temp)
 
-async def nokate(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    xspf_files = search_xspf_files(FOLDER_ID, CREDENTIALS_FILE)
-    if xspf_files:
-        keyboard_buttons = []
-        for file_index, file_name in enumerate(xspf_files):
-            button = InlineKeyboardButton(text=file_name, callback_data=f"select:{file_index + 1}")
-            keyboard_buttons.append([button])
-        keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_buttons)
-        
+async def send_file_list(update: Update, context: ContextTypes.DEFAULT_TYPE, xspf_files, page):
+    files_per_page = 10
+    start_index = page * files_per_page
+    end_index = start_index + files_per_page
+    paginated_files = xspf_files[start_index:end_index]
+    total_files = len(xspf_files)
+    total_pages = (total_files + files_per_page - 1)// files_per_page
+    keyboard_buttons = []
+    for file_index, file_name in enumerate(paginated_files):
+        button = InlineKeyboardButton(text=file_name, callback_data=f"select:{start_index + file_index}")
+        keyboard_buttons.append([button])
+
+    navigation_buttons = []
+    if page > 0:
+        navigation_buttons.append(InlineKeyboardButton(text="Previous", callback_data=f"navigate:{page - 1}"))
+    if end_index < len(xspf_files):
+        navigation_buttons.append(InlineKeyboardButton(text="Next", callback_data=f"navigate:{page + 1}"))
+
+    if navigation_buttons:
+        keyboard_buttons.append(navigation_buttons)
+
+    cancel_button = InlineKeyboardButton(text="Cancel", callback_data="cancel")
+    keyboard_buttons.append([cancel_button])
+    
+    keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_buttons)
+    message_text = f'Click on the below file to download ({page + 1}/{total_pages}):'
+
+    if update.callback_query:
+        await update.callback_query.message.edit_text(
+            # text='Click on the below file to download:',
+            text=message_text,
+            reply_markup=keyboard
+        )
+    else:
         if update.effective_chat.type in ['group', 'supergroup']:
             await context.bot.send_message(
                 chat_id=update.message.from_user.id,
-                text='Click on the below file to download:',
+                # text='Click on the below file to download:',
+                text=message_text,
                 reply_markup=keyboard
             )
             await context.bot.send_message(
-                chat_id=update.effective_chat.id,
-                text=f"Files listed in bots PM @naabi7_bot",
+                chat_id=update.message.chat.id,
+                text=f"Files listed in bot's PM @naabi7_bot",
                 reply_to_message_id=update.message.message_id
-                #parse_mode='Markdown'
             )
         else:
-            await update.message.reply_text('Click on the below file to download:', reply_markup=keyboard)
+            await update.message.reply_text(
+                # text='Click on the below file to download:',
+                text=message_text,
+                reply_markup=keyboard
+            )
 
-# Handler for callback queries from inline buttons
-async def button(update: Update, context: CallbackContext):
+async def nokate(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    xspf_files = search_xspf_files(FOLDER_ID, CREDENTIALS_FILE)
+    if xspf_files:
+        await send_file_list(update, context, xspf_files, page=0)
+
+async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     callback_data = query.data.split(':')
     action = callback_data[0]
+
     if action == 'select':
-        if len(callback_data) == 2:
-            file_index = int(callback_data[1]) - 1  
-            xspf_files = search_xspf_files(FOLDER_ID, CREDENTIALS_FILE)
-            if xspf_files and 0 <= file_index < len(xspf_files):
-                selected_file_name = xspf_files[file_index]
-                file_name = os.path.splitext(selected_file_name)[0] + ".xspf"
-                file_info = download_from_drive(file_name, FOLDER_ID, CREDENTIALS_FILE)
-                if file_info:
-                    if query.message.chat.type in ['group', 'supergroup']:
-                        await context.bot.send_document(
-                            chat_id=query.from_user.id,
-                            document=open(file_info, 'rb'),
-                            filename=file_name
-                        )
-                    else:
-                        await context.bot.send_document(
-                            chat_id=query.message.chat.id,
-                            document=open(file_info, 'rb'),
-                            filename=file_name,
-                            reply_to_message_id=query.message.message_id
-                        )
-                    os.remove(file_info)
-                    await query.message.delete()
-        else:
-            await query.message.reply_text('Invalid selection.')
-    elif action == 'download':
-        if len(callback_data) == 2:
-            global file_name2
-            file_name = os.path.splitext(file_name2)[0] + ".xspf"
-            file_info = download_from_drive(file_name, FOLDER_ID, CREDENTIALS_FILE)
+        file_index = int(callback_data[1])
+        xspf_files = search_xspf_files(FOLDER_ID, CREDENTIALS_FILE)
+        if xspf_files and 0 <= file_index < len(xspf_files):
+            selected_file_name = xspf_files[file_index]
+            file_info = download_from_drive(selected_file_name, FOLDER_ID, CREDENTIALS_FILE)
             if file_info:
                 if query.message.chat.type in ['group', 'supergroup']:
                     await context.bot.send_document(
                         chat_id=query.from_user.id,
                         document=open(file_info, 'rb'),
-                        filename=file_name
+                        filename=selected_file_name
                     )
                 else:
                     await context.bot.send_document(
                         chat_id=query.message.chat.id,
                         document=open(file_info, 'rb'),
-                        filename=file_name,
+                        filename=selected_file_name,
                         reply_to_message_id=query.message.message_id
                     )
                 os.remove(file_info)
                 await query.message.delete()
-            else:
-                await query.message.reply_text('Failed to download the file.')
         else:
             await query.message.reply_text('Invalid selection.')
+
+    elif action == 'navigate':
+        page = int(callback_data[1])
+        xspf_files = search_xspf_files(FOLDER_ID, CREDENTIALS_FILE)
+        await send_file_list(update, context, xspf_files, page)
+
+    elif action == 'search_select':
+        file_id = callback_data[1]
+        global file_name5
+        file_info = download_from_drive(file_id, FOLDER_ID, CREDENTIALS_FILE, by_id=True)
+        if file_info:
+            if query.message.chat.type in ['group', 'supergroup']:
+                await context.bot.send_document(
+                    chat_id=query.from_user.id,
+                    document=open(file_info, 'rb'),
+                    filename=file_info
+                )
+            else:
+                await context.bot.send_document(
+                    chat_id=query.message.chat.id,
+                    document=open(file_info, 'rb'),
+                    filename=file_info,
+                    reply_to_message_id=query.message.message_id
+                )
+            os.remove(file_info)
+            await query.message.delete()
+        else:
+            await query.message.reply_text('Failed to retrieve the file.')
     elif action == 'cancel':
         await query.message.delete()
+
+
+
 
 # Handler for /ping command
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -243,9 +279,12 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if results:
         keyboard_buttons = []
         for file_index, file in enumerate(results):
-            file_name = file["name"]
-            button = InlineKeyboardButton(text=file_name, callback_data=f"select:{file_index + 1}")
+            global file_name5
+            file_name5 = file["name"]
+            button = InlineKeyboardButton(text=file_name5, callback_data=f"search_select:{file['id']}")
             keyboard_buttons.append([button])
+        cancel_button = InlineKeyboardButton(text="Cancel", callback_data="cancel")
+        keyboard_buttons.append([cancel_button])
         keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_buttons)
         
         if update.effective_chat.type in ['group', 'supergroup']:
@@ -254,23 +293,16 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 text='Click on the below file to download:',
                 reply_markup=keyboard
             )
-            
             await context.bot.send_message(
                 chat_id=update.effective_chat.id,
-                text=f"Files listed in bots PM @naabi7_bot",
+                text=f"Files listed in bot's PM @naabi7_bot",
                 reply_to_message_id=update.message.message_id
-                #parse_mode='Markdown'
             )
         else:
             await update.message.reply_text('Click on the below file to download:', reply_markup=keyboard)
     else:
-        # if update.effective_chat.type in ['group', 'supergroup']:
-        #     await context.bot.send_message(
-        #         chat_id=update.message.from_user.id,
-        #         text='No files found.'
-        #     )
-        # else:
         await update.message.reply_text('No files found.')
+
 
 # Handler for /start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
